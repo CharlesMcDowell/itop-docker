@@ -10,7 +10,8 @@ RUN apt-get install -y software-properties-common \
     && apt-get update \
     && apt-get install -y \
         apache2 \
-        php7.3 php7.3-xml php7.3-mysql php7.3-json php7.3-mbstring php7.3-ldap php7.3-soap php7.3-zip php7.3-gd php-apcu \
+        mysql-server \
+        php5 php5-mysql php5-ldap php5-mcrypt php5-cli php5-soap \
         graphviz \
         curl \
         unzip\
@@ -19,6 +20,11 @@ RUN apt-get install -y software-properties-common \
     && rm -rf /var/lib/apt/lists/* \
     && update-alternatives --set php /usr/bin/php7.3
 
+# Get prerequisites software
+RUN yum install httpd \
+    && yum install mysql mysql-server \
+    && yum install php php-mysql php-mcrypt php-xml php-cli php-soap
+
 # Get iTop
 RUN rm -rf /var/www/html/* \
     && mkdir -p /tmp/itop \
@@ -26,6 +32,8 @@ RUN rm -rf /var/www/html/* \
     && unzip /tmp/itop/itop.zip -d /tmp/itop/ \
     && mv /tmp/itop/web/* /var/www/html \
     && rm -rf /tmp/itop
+
+
 
 # Copy services, configs and scripts
 COPY service /etc/service/
@@ -43,8 +51,8 @@ RUN ln -s /make-itop-config-writable.sh /usr/local/bin/conf-w \
     && /update-russian-translations.sh \
     && chown -R www-data:www-data /var/www/html
 
-EXPOSE 80
-
+EXPOSE 3306
+RUN /usr/local/bin/conf-w 
 HEALTHCHECK --interval=5m --timeout=3s CMD curl -f http://localhost/ || exit 1
 
 ENTRYPOINT ["/run.sh"]
